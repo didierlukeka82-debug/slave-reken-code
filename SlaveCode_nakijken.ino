@@ -7,6 +7,7 @@
  // TM1637 Display
 
 TM1637Display display(CLK, DIO);
+
 #define CLK 13
 #define DIO 12
 
@@ -35,10 +36,13 @@ Message msg;
 /* ================== GAME VARIABELEN ================== */
 int a = 0;
 int b = 0;
+int c = 0;
+
 int getal = 0;
 
 bool aGelezen = false;
 bool bGelezen = false;
+bool cGelezen = false;
 
 bool rfidtagSelected = true;   // ← zet op true als RFID actief is
 bool tagSelected = false;
@@ -46,24 +50,29 @@ bool tagSelected = false;
 byte uid[10];
 byte uidSize;
 
-Operators ontvangenOperators[3];
+Operators ontvangenOperators[2];
 bool operatorBekend = false;
+uint8_t answer;
 
 /* ================== LED PATRONEN ================== */
-uint8_t plusP[8] = {
+uint8_t plus[8] = {
   0b00011000,0b00011000,0b00011000,0b11111111,
   0b11111111,0b00011000,0b00011000,0b00011000
 };
+uint8_t keer [8] = {
+  {0b10000001,0b01000010,0b00100100,0b00011000,0b00011000,0b00100100,0b01000010,0b10000001};
 
-uint8_t minP[8] = {
+uint8_t min[8] = {
   0b00000000,0b00000000,0b00000000,0b11111111,
   0b11111111,0b00000000,0b00000000,0b00000000
 };
 
-uint8_t gedeeldP[8] = {
+uint8_t gedeel[8] = {
   0b00000000,0b00011000,0b00011000,0b00000000,
   0b00000000,0b00011000,0b00011000,0b00000000
 };
+uint8_t W [8] = {0b11111100,0b00000010,0b00000010,0b00011100,0b00011100,0b00000010,0b00000010,0b11111100};
+uint8_t L [8] = {0b00000000,0b00000000,0b00000000,0b00000011,0b00000011,0b00000011,0b11111111,0b11111111};
 
 uint8_t *activePattern = nullptr;
 unsigned long showUntil = 0;
@@ -122,9 +131,9 @@ void loop() {
         break;
 
       case MSG_GAME_DATA: {
-        ontvangenOperators[0] = static_cast<Operators>((msg.data[0] << 8) | msg.data[1]);
-        ontvangenOperators[1] = static_cast<Operators>((msg.data[2] << 8) | msg.data[3]);
-        ontvangenOperators[2] = static_cast<Operators>((msg.data[4] << 8) | msg.data[5]);
+        ontvangenOperator[0] = static_cast<Operator>(msg.data[0]);
+        ontvangenOperators[1] = static_cast<Operator>(msg.data[1]);
+        answer = uint8_t(msg.data[2]);
         operatorBekend = true;
         break;
       }
@@ -156,25 +165,30 @@ void loop() {
       } else if (!bGelezen) {
         b = getal;
         bGelezen = true;
+      } else if (!cGelezen) {
+        c = getal;
+        cGelezen = true;
       }
     }
   }
 }
 
   /* ---- Berekening ---- */
-  if (aGelezen && bGelezen && operatorBekend) {
+  if (aGelezen && bGelezen && cGelezen && operatorBekend) {
 
-    Operators gekozenOperator = ontvangenOperators[random(0, 3)];
-
-    toonOperator(gekozenOperator, 2000);
+    toonOperator( ,2000);
     delay(2000);
 
-    int resultaat = berekenSom(a, b, gekozenOperator);
+    int resultaat = berekenSom(a, b, ontvangenOperators[0]);
     Serial.print("Resultaat: ");
     Serial.println(resultaat);
+    resultaat = berekenSom(resultaat,c ontvangenOperators[1]);
+    Serial.print("Resultaat: ");
+    Serial.Println(resultaat);
 
     aGelezen = false;
     bGelezen = false;
+    cGelezen = false;
     operatorBekend = false;
   }
 
